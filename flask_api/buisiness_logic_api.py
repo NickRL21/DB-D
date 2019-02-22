@@ -7,7 +7,7 @@ def _get_db_conn():
         connect_str = "dbname='dbd_database' user='postgres' host='localhost' password='password'"
         conn = psycopg2.connect(connect_str)
         return conn
-    except exception as e:
+    except Exception as e:
         print(e.__str__())
         return None
 
@@ -15,14 +15,15 @@ def _get_db_conn():
 def _get_cursor(connection):
     try:
         cursor = connection.cursor()
-    except exception as e:
+    except Exception as e:
         print(e.__str__())
 
 
 def test_db():
-    conn = _get_db_conn
+    conn = _get_db_conn()
+    print (conn)
     if conn is not None:
-        cursor = _get_cursor
+        cursor = _get_cursor(conn)
     else:
         assert False
     rows = cursor.execute("""SELECT * from Players""")
@@ -31,3 +32,5 @@ def test_db():
         assert False
     else:
         assert True
+
+test_db()
