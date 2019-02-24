@@ -14,23 +14,19 @@ def _get_db_conn():
 
 def _get_cursor(connection):
     try:
-        cursor = connection.cursor()
+        return connection.cursor()
     except Exception as e:
         print(e.__str__())
 
 
 def test_db():
     conn = _get_db_conn()
-    print (conn)
-    if conn is not None:
-        cursor = _get_cursor(conn)
-    else:
-        assert False
-    rows = cursor.execute("""SELECT * from Players""")
+    assert conn is not None
+    cursor = _get_cursor(conn)
+    assert cursor is not None
+    cursor.execute("SELECT * FROM Player;")
+    rows = cursor.fetchall()
+    assert len(rows) > 0
+    cursor.close()
+    conn.close()
     print(rows)
-    if len(rows) == 0:
-        assert False
-    else:
-        assert True
-
-test_db()
