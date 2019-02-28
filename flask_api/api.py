@@ -20,7 +20,7 @@ class Player(Resource):
             conn, cursor = get_db()
             # execute query
             cursor.execute("SELECT * FROM Player WHERE (dci_number = %s)", (dci_number,))
-            # build response 
+            # build response
             resp = {'body': cursor.fetchall()}
             # close connections
             close(cursor, conn)
