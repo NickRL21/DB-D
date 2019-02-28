@@ -1,4 +1,8 @@
+# by Nicholas lewis
+# helper to make using psycopg2 a little easier
+
 import psycopg2
+
 
 def get_db_conn():
     try:
@@ -16,6 +20,17 @@ def get_cursor(connection):
         return connection.cursor()
     except Exception as e:
         print(e.__str__())
+
+
+def get_db():
+    conn = get_db_conn()
+    cursor = get_cursor(conn)
+    return conn, cursor
+
+
+def close(cursor, conn):
+    cursor.close()
+    conn.close()
 
 
 def test_db():
