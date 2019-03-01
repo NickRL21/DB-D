@@ -1,8 +1,7 @@
-import json
 from flask_api import status
 from flask import Flask
-from flask_restful import reqparse, abort, Api, Resource
-from database_helper import *
+from flask_restful import reqparse, Api, Resource
+from src.dbd_api.database_helper import *
 app = Flask(__name__)
 api = Api(app)
 parser = reqparse.RequestParser()
@@ -24,6 +23,7 @@ class Player(Resource):
             resp = {'body': cursor.fetchall()}
             # close connections
             close(cursor, conn)
+            # return response and status code
             return resp, status.HTTP_200_OK
         else:
             return {'body': 'invalid dci_number must be an int'}, status.HTTP_400_BAD_REQUEST
@@ -64,6 +64,7 @@ class Player(Resource):
 # add resource and url
 api.add_resource(Player, '/player/<dci_number>')
 
+# app will run when this file is run
 if __name__ == '__main__':
     app.run(debug=True)
 
