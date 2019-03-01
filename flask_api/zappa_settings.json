@@ -1,6 +1,0 @@
-{
-    "dev": {
-        "s3_bucket": "dev-db-d-database-api",
-        "app_function": "api.app"
-    }
-}

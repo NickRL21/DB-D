@@ -7,7 +7,7 @@ import psycopg2
 def get_db_conn():
     try:
         # change to read password from file
-        connect_str = "dbname='dbd_database' user='postgres' host='localhost' password='password'"
+        connect_str = "dbname='dbd_database' user='postgres' host='ec2-3-87-207-3.compute-1.amazonaws.com' password='password'"
         conn = psycopg2.connect(connect_str)
         return conn
     except Exception as e:

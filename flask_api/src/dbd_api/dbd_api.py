@@ -1,17 +1,48 @@
 from flask_api import status
-from flask import Flask
+import flask
 from flask_restful import reqparse, Api, Resource
 from src.dbd_api.database_helper import *
-app = Flask(__name__)
+app = flask.Flask(__name__)
 api = Api(app)
 parser = reqparse.RequestParser()
 parser.add_argument('name')
 
 
-# class for resource group
-class Player(Resource):
-    # get player based on dci
-    def get(self, dci_number):
+# api is live at https://unthgdgw0h.execute-api.us-east-1.amazonaws.com/dev
+
+##############################################
+# resources to get started ask Nick for help #
+##############################################
+
+##############################
+# help with database library #
+##############################
+# http://initd.org/psycopg/docs/usage.html
+
+###########################
+# Help with api framework #
+###########################
+# https://flask-restful.readthedocs.io/en/0.3.5/quickstart.html
+# http://flask.pocoo.org/docs/1.0/
+
+############################################
+# Help with the serverless framework zappa #
+############################################
+# https://github.com/Miserlou/Zappa
+# https://www.gun.io/blog/serverless-microservices-with-zappa-and-flask
+
+# just for my reference
+# https://github.com/Miserlou/Zappa#advanced-settings
+
+
+@app.route('/')
+def index():
+    return "Hello, world!", 200
+
+
+@app.route('/player/<dci_number>', methods=['GET', 'POST'])
+def get(dci_number):
+    if flask.request.method == 'GET':
         # make sure dci_number is an int for safety
         if str.isdigit(dci_number):
             dci_number = int(dci_number)
@@ -27,9 +58,7 @@ class Player(Resource):
             return resp, status.HTTP_200_OK
         else:
             return {'body': 'invalid dci_number must be an int'}, status.HTTP_400_BAD_REQUEST
-
-# TODO need to look into how to prevent sql injection in body
-    def post(self, dci_number):
+    else:
         args = parser.parse_args()
         name = args.get('name')
         if str.isdigit(dci_number):
@@ -61,8 +90,8 @@ class Player(Resource):
             return {'body': 'invalid dci_number must be an int'}, status.HTTP_400_BAD_REQUEST
 
 
-# add resource and url
-api.add_resource(Player, '/player/<dci_number>')
+# TODO need to look into how to prevent sql injection in body
+
 
 # app will run when this file is run
 if __name__ == '__main__':
