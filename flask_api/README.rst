@@ -6,7 +6,11 @@ run api.py
 use postman(https://www.getpostman.com/) to hit api
 
 deploy:
-zappa deploy dev
+$ cd path/to/flask_api_directory/
+$ virtualenv env
+$ source env/bin/activate
+$ pip install -e .
+$ zappa deploy dev
 
 database:
 get a connection and a cursor

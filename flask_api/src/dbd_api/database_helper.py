@@ -1,5 +1,6 @@
 # by Nicholas lewis
 # helper to make using psycopg2 a little easier
+# https://linuxize.com/post/how-to-install-postgresql-on-ubuntu-18-04/
 
 import psycopg2
 

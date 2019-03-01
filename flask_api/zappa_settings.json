@@ -1,0 +1,11 @@
+{
+    "dev": {
+        "app_function": "src.dbd_api.dbd_api.app",
+        "aws_region": "us-east-1",
+        "profile_name": "default",
+        "project_name": "flask-api",
+        "runtime": "python3.6",
+        "s3_bucket": "dev-db-d-database-api",
+        "keep_warm": false
+    }
+}

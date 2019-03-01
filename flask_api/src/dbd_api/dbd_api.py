@@ -55,9 +55,9 @@ def get(dci_number):
             # close connections
             close(cursor, conn)
             # return response and status code
-            return resp, status.HTTP_200_OK
+            return flask.jsonify(resp), status.HTTP_200_OK
         else:
-            return {'body': 'invalid dci_number must be an int'}, status.HTTP_400_BAD_REQUEST
+            return flask.jsonify({'body': 'invalid dci_number must be an int'}), status.HTTP_400_BAD_REQUEST
     else:
         args = parser.parse_args()
         name = args.get('name')
@@ -78,16 +78,16 @@ def get(dci_number):
                     conn.commit()
                     # close the connections
                     close(cursor, conn)
-                    return {'status': 'success'}
+                    return flask.jsonify({'status': 'success'})
                 else:
                     close(cursor, conn)
-                    return {"status": "error: not added"}, status.HTTP_400_BAD_REQUEST
+                    return flask.jsonify({"status": "error: not added"}), status.HTTP_400_BAD_REQUEST
                 pass
 
             else:
-                return {"status": "error: no name"}, status.HTTP_400_BAD_REQUEST
+                return flask.jsonify({"status": "error: no name"}), status.HTTP_400_BAD_REQUEST
         else:
-            return {'body': 'invalid dci_number must be an int'}, status.HTTP_400_BAD_REQUEST
+            return flask.jsonify({'body': 'invalid dci_number must be an int'}), status.HTTP_400_BAD_REQUEST
 
 
 # TODO need to look into how to prevent sql injection in body
