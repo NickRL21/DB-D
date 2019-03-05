@@ -1,7 +1,7 @@
 from flask_api import status
 import flask
 from flask_restful import reqparse, Api, Resource
-from src.dbd_api.database_helper import *
+from dbd_api.database_helper import Database
 app = flask.Flask(__name__)
 api = Api(app)
 parser = reqparse.RequestParser()
@@ -42,18 +42,19 @@ def index():
 
 @app.route('/player/<dci_number>', methods=['GET', 'POST'])
 def get(dci_number):
+    db = Database('dbd_creds')
     if flask.request.method == 'GET':
         # make sure dci_number is an int for safety
         if str.isdigit(dci_number):
             dci_number = int(dci_number)
             # get db conn
-            conn, cursor = get_db()
+            conn, cursor = db.get_db()
             # execute query
             cursor.execute("SELECT * FROM Player WHERE (dci_number = %s)", (dci_number,))
             # build response
             resp = {'body': cursor.fetchall()}
             # close connections
-            close(cursor, conn)
+            db.close(cursor, conn)
             # return response and status code
             return flask.jsonify(resp), status.HTTP_200_OK
         else:
@@ -65,7 +66,7 @@ def get(dci_number):
             dci_number = int(dci_number)
             if name:
                 # get db conn and cursor
-                conn, cursor = get_db()
+                conn, cursor = db.get_db()
                 # execute insert
                 cursor.execute("INSERT INTO player(dci_number, name) VALUES (%s, %s)", (dci_number, name))
                 # query item just inserted
@@ -77,10 +78,10 @@ def get(dci_number):
                     # if so commit changes to database so that they persist
                     conn.commit()
                     # close the connections
-                    close(cursor, conn)
+                    db.close(cursor, conn)
                     return flask.jsonify({'status': 'success'})
                 else:
-                    close(cursor, conn)
+                    db.close(cursor, conn)
                     return flask.jsonify({"status": "error: not added"}), status.HTTP_400_BAD_REQUEST
                 pass
 
