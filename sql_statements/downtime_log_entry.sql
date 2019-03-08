@@ -18,7 +18,7 @@ CREATE TABLE DOWNTIME_LOG_ENTRY(
 
 -- TEST DATA:
 
-insert into DOWNTIME_LOG_ENTRY values (1,1422314756,'Garreth',2017-5-12,0,0,0,0,-5,0,0,-5);
-insert into DOWNTIME_LOG_ENTRY values (2,1422314756,'Garreth',2018-8-2,0,0,0,0,-10,0,0,-10);
-insert into DOWNTIME_LOG_ENTRY values (1,1422314756,'Thorun',2016-3-17,0,0,0,0,-5,0,0,-5);
-insert into DOWNTIME_LOG_ENTRY values (2,1422314756,'Thorun',2017-8-10,0,0,0,0,-10,0,0,-10);
+insert into DOWNTIME_LOG_ENTRY values (1,1422314756,'Garreth','2017-5-12',0,0,0,0,-5,0,0,-5);
+insert into DOWNTIME_LOG_ENTRY values (2,1422314756,'Garreth','2018-8-2',0,0,0,0,-10,0,0,-10);
+insert into DOWNTIME_LOG_ENTRY values (1,1422314756,'Thorun','2016-3-17',0,0,0,0,-5,0,0,-5);
+insert into DOWNTIME_LOG_ENTRY values (2,1422314756,'Thorun','2017-8-10',0,0,0,0,-10,0,0,-10);
