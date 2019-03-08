@@ -13,7 +13,7 @@ CREATE TABLE DOWNTIME_LOG_ENTRY(
   delta_Renown  INT,
   PRIMARY KEY (D_log_ID, player_DCI, character_name)
   FOREIGN KEY (player_DCI) REFERENCES Player(dci_number),
-  FOREIGN KEY (character_name) REFERENCES character(name)
+  FOREIGN KEY (character_name) REFERENCES P_character(name)
 );
 
 -- TEST DATA:
