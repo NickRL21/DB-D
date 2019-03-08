@@ -1,4 +1,4 @@
-CREATE TABLE magical_item(
+CREATE TABLE Magical_item(
   dci_number INT NOT NULL,
   character_name VARCHAR(30),
   name VARCHAR(30),
