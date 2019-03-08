@@ -19,7 +19,7 @@ CREATE TABLE ADVENTURE_LOG_ENTRY(
 
 -- TEST DATA:
 
-insert into ADVENTURE_LOG_ENTRY values (1,1422314756,'Thorun','Dragon Heist',2017-6-23,5,2,0,0,0,10,2);
-insert into ADVENTURE_LOG_ENTRY values (2,1422314756,'Thorun','Tales From The Yawning Portal',2017-8-10,5,2,0,0,0,10,2);
-insert into ADVENTURE_LOG_ENTRY values (1,1422314756,'Dorn','Curse Of Strahd',2018-1-23,5,2,0,0,0,10,2);
-insert into ADVENTURE_LOG_ENTRY values (2,1422314756,'Dorn','Princes Of The Apocolypse',2018-4-22,5,2,0,0,0,10,2);
+insert into ADVENTURE_LOG_ENTRY values (1,1422314756,'Thorun','Dragon Heist','2017-6-23',5,2,0,0,0,10,2);
+insert into ADVENTURE_LOG_ENTRY values (2,1422314756,'Thorun','Tales From The Yawning Portal','2017-8-10',5,2,0,0,0,10,2);
+insert into ADVENTURE_LOG_ENTRY values (1,1422314756,'Dorn','Curse Of Strahd','2018-1-23',5,2,0,0,0,10,2);
+insert into ADVENTURE_LOG_ENTRY values (2,1422314756,'Dorn','Princes Of The Apocolypse','2018-4-22',5,2,0,0,0,10,2);
