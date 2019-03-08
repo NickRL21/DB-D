@@ -1,4 +1,4 @@
-CREATE TABLE character(
+CREATE TABLE P_character(
   dci_number INT NOT NULL,
   name VARCHAR(30) NOT NULL,
   race VARCHAR(30),
