@@ -14,7 +14,7 @@ CREATE TABLE ADVENTURE_LOG_ENTRY(
   delta_ACP INT,
   PRIMARY KEY (A_log_id, player_DCI, character_name)
   FOREIGN KEY (player_DCI) REFERENCES Player(dci_number),
-  FOREIGN KEY (character_name) REFERENCES character(name)
+  FOREIGN KEY (character_name) REFERENCES P_character(name)
 );
 
 -- TEST DATA:
