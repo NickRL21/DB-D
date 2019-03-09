@@ -1,5 +1,5 @@
 CREATE TABLE MAGICAL_ITEM(
-  dci_number INT NOT NULL,
+  dci_number CHAR(10) NOT NULL,
   character_name VARCHAR(30),
   p_name VARCHAR(30),
   quantity VARCHAR(30),
