@@ -6,6 +6,7 @@ insert into MAGICAL_ITEM values ('1422314756','Aelar','Wand of Magic Missiles',1
 insert into ADVENTURE_LOG_ENTRY values (1,'1422314756','Aelar','Storm Kings Thunder','2016-3-16',5,2,0,0,0,10,2);
 insert into ADVENTURE_LOG_ENTRY values (2,'1422314756','Aelar','Out Of The Abyss','2017-4-18',5,2,0,0,0,10,2);
 insert into DOWNTIME_LOG_ENTRY values (1,'1422314756','Aelar','2016-3-17',0,0,0,0,-5,0,0,-5);
+insert into DOWNTIME_LOG_ENTRY values (1,'1422314756','Aelar','2017-4-18',0,0,0,0,-5,0,0,-5);
 insert into P_CHARACTER values ('1422314756','Garreth','Cleric','Acolyte','Human',2);
 insert into MAGICAL_ITEM values ('1422314756','Garreth','+1 Shield',1,'2017-5-12');
 insert into MAGICAL_ITEM values ('1422314756','Garreth','Periapt Of Wound Closure',1,'2018-8-2');
