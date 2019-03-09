@@ -4,7 +4,7 @@ CREATE TABLE ADVENTURE_LOG_ENTRY(
   player_DCI INT NOT NULL,
   character_name VARCHAR(30),
   advanture_name CHAR,
-  date DATE NOT NULL,
+  a_date DATE NOT NULL,
   delta_downtime  INT,
   delta_TCP_T1 INT,
   delta_TCP_T2 INT,
@@ -14,7 +14,7 @@ CREATE TABLE ADVENTURE_LOG_ENTRY(
   delta_ACP INT,
   PRIMARY KEY (A_log_id, player_DCI, character_name)
   FOREIGN KEY (player_DCI) REFERENCES Player(dci_number),
-  FOREIGN KEY (character_name) REFERENCES P_character(name)
+  FOREIGN KEY (character_name) REFERENCES P_character(p_name)
 );
 
 -- TEST DATA:
