@@ -36,7 +36,8 @@ class Database:
         cursor = self.get_cursor(conn)
         return conn, cursor
 
-    def close(self, cursor, conn):
+    @staticmethod
+    def close(cursor, conn):
         cursor.close()
         conn.close()
 

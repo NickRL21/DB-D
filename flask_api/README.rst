@@ -16,6 +16,7 @@ database:
 get a connection and a cursor
 use the cursor to execute sql commands
 fetch the results with fetchall() or fetchone()
+requires a json file containing db credentials
 
 credentials:
 to hit database or deploy requires a credentials file in a .aws directory in your home directory with chmod 600 permissions

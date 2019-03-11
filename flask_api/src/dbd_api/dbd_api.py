@@ -1,7 +1,7 @@
 from flask_api import status
 import flask
 from flask_restful import reqparse, Api, Resource
-from dbd_api.database_helper import Database
+from database_helper import Database  # need to fix this import
 app = flask.Flask(__name__)
 api = Api(app)
 parser = reqparse.RequestParser()
