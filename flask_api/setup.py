@@ -39,8 +39,9 @@ setup(
     install_requires=[
         "psycopg2",
         "flask",
-        "flask_restful",
-        "flask_api"
+        "flask_httpauth",
+        "zappa",
+        "passlib"
 
     ],
     setup_requires=[]

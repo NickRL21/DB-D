@@ -1,11 +1,14 @@
 # from flask_api import status
-from flask import Flask, request, abort, jsonify
-# from flask_restful import reqparse, Api, Resource
-from database_helper import Database  # need to fix this import
-from user_helper import user_exists, authenticate_user, add_user
+from flask import Flask, request, abort, jsonify, g
+from flask_httpauth import HTTPBasicAuth
+import psycopg2
+import json
+# for the life of me i can't get the deployed version to import the other files
+# from dbd_api.database_helper import Database  # need to fix this import
+# from dbd_api.user_helper import user_exists, authenticate_user, add_user
 
 app = Flask(__name__)
-
+auth = HTTPBasicAuth()
 # this path is required for creds when flask is running./src/dbd_api/dbd_creds
 
 # api is live at https://unthgdgw0h.execute-api.us-east-1.amazonaws.com/dev
@@ -36,8 +39,22 @@ app = Flask(__name__)
 
 
 @app.route('/')
+@auth.login_required
 def index():
-    return "Hello, world!", 200
+    return "dbd_api v1.0", 200
+
+
+@auth.verify_password
+def verify_password(username, password):
+    if user_exists(username):
+        if authenticate_user(username, password):
+            g.user = {'username': username}
+            return True
+        else:
+            return False
+
+    else:
+        return False
 
 
 @app.route('/register', methods=['POST'])
@@ -46,10 +63,7 @@ def register_user():
     username = request.authorization.get('username')
     password = request.authorization.get('password')
     if username is None or password is None:
-        username = body.get('username')
-        password = body.get('password')
-        if username is None or password is None:
-            return jsonify({'msg': 'ERROR: username or password missing'}), 400
+        return jsonify({'msg': 'ERROR: username or password missing'}), 400
     username = username.__str__()
     password = password.__str__()
 
@@ -81,6 +95,7 @@ def register_user():
 
 
 @app.route('/player/<dci_number>', methods=['GET'])
+@auth.login_required
 def get_player(dci_number):
     db = Database('./src/dbd_api/dbd_creds')
     if request.method == 'GET':
@@ -121,8 +136,6 @@ def insert_player(name, dci_number):
         return False
 
 
-# TODO need to look into how to prevent sql injection in body
-
 
 # app will run when this file is run
 if __name__ == '__main__':
@@ -135,3 +148,103 @@ if __name__ == '__main__':
 # 200 for successful login
 
 # TODO register(dci_number, name, password)
+
+
+# helper methods unfortunatly these have to be in this file right now
+# i cant get lambda to import the helper files 
+from passlib.apps import custom_app_context as pwd_context
+
+
+def user_exists(dci_number):
+    user_db = Database('./src/dbd_api/dbd_creds')
+    conn, cursor = user_db.get_db()
+    cursor.execute("SELECT dci_number FROM users WHERE dci_number = %s", (dci_number,))
+    user = cursor.fetchone()
+    Database.close(conn, cursor)
+    if user is not None:
+        return True
+    else:
+        return False
+
+
+def add_user(dci_number, password):
+    hashed_pwd = hash(password)
+    user_db = Database('./src/dbd_api/dbd_creds')
+    conn, cursor = user_db.get_db()
+    try:
+        cursor.execute("INSERT INTO users VALUES (%s, %s)", (dci_number, hashed_pwd,))
+        cursor.execute("SELECT * FROM users WHERE dci_number = %s", (dci_number,))
+        added = cursor.fetchone()
+        # check to make sure that it was added properly
+        if added[0] == dci_number:
+            conn.commit()
+            Database.close(conn, cursor)
+            return True
+        else:
+            raise Exception('failed to add')
+    except Exception as e:
+        print(e.__str__())
+        Database.close(conn, cursor)
+        return False
+
+
+def authenticate_user(dci_number, password):
+    user_db = Database('./src/dbd_api/dbd_creds')
+    conn, cursor = user_db.get_db()
+    cursor.execute("SELECT pwd_hash FROM users WHERE dci_number = %s", (dci_number,))
+    hash = cursor.fetchone()
+    Database.close(conn, cursor)
+    if hash is not None:
+        if verify(password, hash[0]):
+            return True
+        else:
+            return False
+    else:
+        return False
+
+
+def hash(password):
+    return pwd_context.encrypt(password)
+
+
+def verify(password, hash):
+    return pwd_context.verify(password, hash)
+
+
+
+
+
+class Database:
+    def __init__(self, credential_path):
+        lines = ''
+        with open(credential_path, 'r') as creds:
+            for line in creds.readlines():
+                lines += line
+        self._credentials = json.loads(lines)
+
+    def get_db_conn(self):
+        try:
+            # change to read password from file
+            connect_str = f"dbname='{self._credentials.get('dbname')}' user='{self._credentials.get('user')}' host='{self._credentials.get('host')}' password='{self._credentials.get('password')}'"
+            conn = psycopg2.connect(connect_str)
+            return conn
+        except Exception as e:
+            print(e.__str__())
+            return None
+
+    @staticmethod
+    def get_cursor(connection):
+        try:
+            return connection.cursor()
+        except Exception as e:
+            print(e.__str__())
+
+    def get_db(self):
+        conn = self.get_db_conn()
+        cursor = self.get_cursor(conn)
+        return conn, cursor
+
+    @staticmethod
+    def close(cursor, conn):
+        cursor.close()
+        conn.close()
