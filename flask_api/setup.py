@@ -40,8 +40,7 @@ setup(
         "psycopg2",
         "flask",
         "flask_restful",
-        "flask_api",
-        "zappa"
+        "flask_api"
 
     ],
     setup_requires=[]

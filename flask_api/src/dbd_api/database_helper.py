@@ -9,7 +9,7 @@ import psycopg2
 class Database:
     def __init__(self, credential_path):
         lines = ''
-        with open (credential_path, 'r') as creds:
+        with open(credential_path, 'r') as creds:
             for line in creds.readlines():
                 lines += line
         self._credentials = json.loads(lines)

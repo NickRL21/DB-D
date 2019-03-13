@@ -5,9 +5,9 @@ from passlib.apps import custom_app_context as pwd_context
 
 
 def user_exists(dci_number):
-    user_db = Database('dbd_creds')
+    user_db = Database('./src/dbd_api/dbd_creds')
     conn, cursor = user_db.get_db()
-    cursor.execute("SELECT dci_number FROM users WHERE dci_number = %s", (int(dci_number),))
+    cursor.execute("SELECT dci_number FROM users WHERE dci_number = %s", (dci_number,))
     user = cursor.fetchone()
     Database.close(conn, cursor)
     if user is not None:
@@ -18,11 +18,11 @@ def user_exists(dci_number):
 
 def add_user(dci_number, password):
     hashed_pwd = hash(password)
-    user_db = Database('dbd_creds')
+    user_db = Database('./src/dbd_api/dbd_creds')
     conn, cursor = user_db.get_db()
     try:
-        cursor.execute("INSERT INTO users VALUES (%s, %s)", (int(dci_number), hashed_pwd,))
-        cursor.execute("SELECT * FROM users WHERE dci_number = %s", (int(dci_number),))
+        cursor.execute("INSERT INTO users VALUES (%s, %s)", (dci_number, hashed_pwd,))
+        cursor.execute("SELECT * FROM users WHERE dci_number = %s", (dci_number,))
         added = cursor.fetchone()
         # check to make sure that it was added properly
         if added[0] == dci_number:
@@ -38,9 +38,9 @@ def add_user(dci_number, password):
 
 
 def authenticate_user(dci_number, password):
-    user_db = Database('dbd_creds')
+    user_db = Database('./src/dbd_api/dbd_creds')
     conn, cursor = user_db.get_db()
-    cursor.execute("SELECT pwd_hash FROM users WHERE dci_number = %s", (int(dci_number),))
+    cursor.execute("SELECT pwd_hash FROM users WHERE dci_number = %s", (dci_number,))
     hash = cursor.fetchone()
     Database.close(conn, cursor)
     if hash is not None:
@@ -60,4 +60,3 @@ def verify(password, hash):
     return pwd_context.verify(password, hash)
 
 
-a = authenticate_user(1422314756, 'password')
