@@ -12,6 +12,7 @@ CREATE TABLE ADVENTURE_LOG_ENTRY(
   delta_gold FLOAT DEFAULT 0.0,
   delta_ACP INT,
   delta_renown INT,
+  DM_DCI CHAR(10),
   PRIMARY KEY (A_log_id, player_DCI, character_name),
   FOREIGN KEY (player_DCI) REFERENCES PLAYER(dci_number),
   FOREIGN KEY (player_dci, character_name) REFERENCES P_CHARACTER(dci_number,p_name)
