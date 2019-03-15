@@ -1,4 +1,5 @@
 # from flask_api import status
+import logging
 from flask import Flask, request, abort, jsonify, g
 from flask_httpauth import HTTPBasicAuth
 import psycopg2
@@ -9,6 +10,8 @@ import json
 
 app = Flask(__name__)
 auth = HTTPBasicAuth()
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 # this path is required for creds when flask is running./src/dbd_api/dbd_creds
 
 # api is live at https://unthgdgw0h.execute-api.us-east-1.amazonaws.com/dev
@@ -35,8 +38,11 @@ auth = HTTPBasicAuth()
 # https://www.gun.io/blog/serverless-microservices-with-zappa-and-flask
 
 # just for my reference
-# https://github.com/Miserlou/Zappa#advanced-settings
 
+# https://github.com/Miserlou/Zappa#advanced-settings
+DB_CREDENTIAL_PATH = './src/dbd_api/dbd_creds'
+# for local testing
+#DB_CREDENTIAL_PATH = 'dbd_creds'
 
 @app.route('/')
 @auth.login_required
@@ -88,37 +94,109 @@ def register_user():
             else:
                 return jsonify({'msg': 'ERROR: user registration failed'}), 400
         except Exception as e:
-            raise e
+            logger.error(e.__str__())
             return jsonify({'msg': 'ERROR: user registration failed'}), 500
     else:
         return jsonify({'msg': 'ERROR: username length must be 10 and must be a number'}), 400
 
 
-@app.route('/player/<dci_number>', methods=['GET'])
+# endpoint for getting player info
+@app.route('/player', methods=['GET'])
 @auth.login_required
-def get_player(dci_number):
-    db = Database('./src/dbd_api/dbd_creds')
+def get_player():
+    dci_number = g.user.get('username')
+    db = Database(DB_CREDENTIAL_PATH)
     if request.method == 'GET':
         # get db conn
-        if str.isdigit(dci_number) and len(dci_number) == 10:
-            try:
+        try:
+            conn, cursor = db.get_db()
+            # execute query
+            cursor.execute("SELECT * FROM Player WHERE (dci_number = %s)", (dci_number,))
+            # build response
+            resp = {'body': cursor.fetchall()}
+            # close connections
+            db.close(cursor, conn)
+            return jsonify(resp), 200
+        except Exception as e:
+            logger.error(e.__str__())
+            return jsonify({'msg': 'ERROR'}), 500
+
+
+# endpoint for getting all characters for a player
+@app.route('/character', methods=['GET'])
+@auth.login_required
+def characters():
+    dci_number = g.user.get('username')
+    db = Database(DB_CREDENTIAL_PATH)
+    if request.method == 'GET':
+        try:
+            conn, cursor = db.get_db()
+            # execute query
+            cursor.execute("SELECT * FROM P_CHARACTER WHERE (dci_number = %s)", (dci_number,))
+            # build response
+            resp = {'body': cursor.fetchall()}
+            # close connections
+            db.close(cursor, conn)
+            return jsonify(resp), 200
+        except Exception as e:
+            raise e
+            logger.error(e.__str__())
+            return jsonify({'msg': 'ERROR'}), 500
+
+
+# endpoint for getting, adding, or updating a single player
+@app.route('/character/<char_name>', methods=['GET', 'POST, PUT'])
+@auth.login_required
+def character(char_name):
+    # enforce length constraint
+    if len(char_name) > 30:
+        return jsonify({'msg': 'ERROR: character name too long, max 30 characters'}), 400
+
+    dci_number = g.user.get('username')
+    db = Database(DB_CREDENTIAL_PATH)
+    if request.method == 'GET':
+        try:
+            # get db connection
+            conn, cursor = db.get_db()
+            # execute query
+            cursor.execute("SELECT * FROM P_CHARACTER WHERE (dci_number = %s AND p_name = %s)", (dci_number, char_name,))
+            # build response
+            resp = {'body': cursor.fetchone()}
+            # close connections
+            db.close(cursor, conn)
+            return jsonify(resp), 200
+        except Exception as e:
+            logger.error(e.__str__())
+            return jsonify({'msg': 'ERROR'}), 500
+
+    # create new character
+    if request.method == 'POST':
+        try:
+            body = request.json
+            if body:
+                # get db connection
                 conn, cursor = db.get_db()
                 # execute query
-                cursor.execute("SELECT * FROM Player WHERE (dci_number = %s)", (dci_number,))
+                cursor.execute("SELECT * FROM P_CHARACTER WHERE (dci_number = %s AND p_name = %s)", (dci_number, char_name,))
                 # build response
-                resp = {'body': cursor.fetchall()}
+                resp = {'body': cursor.fetchone()}
                 # close connections
                 db.close(cursor, conn)
                 return jsonify(resp), 200
-            except:
-                return jsonify({'msg': 'ERROR'}), 500
+            else:
+                return jsonify({'msg': 'ERROR: no body present'}), 400
 
-        else:
-            return jsonify({'msg': 'ERROR: username length must be 10 and must be a number'}), 400
+        except Exception as e:
+            logger.error(e.__str__())
+            return jsonify({'msg': 'ERROR'}), 500
+    # update character
+    if request.method == 'PUT':
+        pass
+
 
 
 def insert_player(name, dci_number):
-    db = Database('./src/dbd_api/dbd_creds')
+    db = Database(DB_CREDENTIAL_PATH)
     conn, cursor = db.get_db()
     cursor.execute("INSERT INTO player(dci_number, p_name) VALUES (%s, %s)", (dci_number, name))
     # query item just inserted
@@ -136,7 +214,6 @@ def insert_player(name, dci_number):
         return False
 
 
-
 # app will run when this file is run
 if __name__ == '__main__':
     app.run(debug=True)
@@ -151,12 +228,16 @@ if __name__ == '__main__':
 
 
 # helper methods unfortunatly these have to be in this file right now
-# i cant get lambda to import the helper files 
+# i cant get lambda to import the helper files
+
+######################
+# user login helper methods
+######################
 from passlib.apps import custom_app_context as pwd_context
 
 
 def user_exists(dci_number):
-    user_db = Database('./src/dbd_api/dbd_creds')
+    user_db = Database(DB_CREDENTIAL_PATH)
     conn, cursor = user_db.get_db()
     cursor.execute("SELECT dci_number FROM users WHERE dci_number = %s", (dci_number,))
     user = cursor.fetchone()
@@ -169,7 +250,7 @@ def user_exists(dci_number):
 
 def add_user(dci_number, password):
     hashed_pwd = hash(password)
-    user_db = Database('./src/dbd_api/dbd_creds')
+    user_db = Database(DB_CREDENTIAL_PATH)
     conn, cursor = user_db.get_db()
     try:
         cursor.execute("INSERT INTO users VALUES (%s, %s)", (dci_number, hashed_pwd,))
@@ -189,7 +270,7 @@ def add_user(dci_number, password):
 
 
 def authenticate_user(dci_number, password):
-    user_db = Database('./src/dbd_api/dbd_creds')
+    user_db = Database(DB_CREDENTIAL_PATH)
     conn, cursor = user_db.get_db()
     cursor.execute("SELECT pwd_hash FROM users WHERE dci_number = %s", (dci_number,))
     hash = cursor.fetchone()
@@ -211,8 +292,9 @@ def verify(password, hash):
     return pwd_context.verify(password, hash)
 
 
-
-
+###################
+# database helper
+###################
 
 class Database:
     def __init__(self, credential_path):
