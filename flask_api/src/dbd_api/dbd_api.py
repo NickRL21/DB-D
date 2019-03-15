@@ -144,11 +144,13 @@ def characters():
             return jsonify({'msg': 'ERROR'}), 500
 
 
-# endpoint for getting, adding, or updating a single player
-@app.route('/character/<char_name>', methods=['GET', 'POST, PUT'])
+# endpoint for getting, adding, deleting, or updating a single player
+@app.route('/character/<char_name>', methods=['GET', 'POST', 'PUT', 'DELETE'])
 @auth.login_required
 def character(char_name):
     # enforce length constraint
+    if not char_name:
+        return jsonify({'msg': 'ERROR: character name cannot be null'}), 400
     if len(char_name) > 30:
         return jsonify({'msg': 'ERROR: character name too long, max 30 characters'}), 400
 
@@ -170,19 +172,33 @@ def character(char_name):
             return jsonify({'msg': 'ERROR'}), 500
 
     # create new character
-    if request.method == 'POST':
+    elif request.method == 'POST':
         try:
             body = request.json
             if body:
-                # get db connection
-                conn, cursor = db.get_db()
-                # execute query
-                cursor.execute("SELECT * FROM P_CHARACTER WHERE (dci_number = %s AND p_name = %s)", (dci_number, char_name,))
-                # build response
-                resp = {'body': cursor.fetchone()}
-                # close connections
-                db.close(cursor, conn)
-                return jsonify(resp), 200
+                if items_in_dict_not_greater_than(body, 30):
+                    if body.get('level') > 20 or body.get('level') < 0:
+                        return jsonify({'msg': 'ERROR: invalid level'}), 400
+                    # get db connection
+                    conn, cursor = db.get_db()
+                    # insert character
+                    cursor.execute("INSERT INTO P_CHARACTER(dci_number, p_name, race, class, background, level) VALUES(%s, %s, %s, %s, %s, %s)",
+                                   (dci_number, char_name, body.get('race'), body.get('class'), body.get('background'), int(body.get('level'))))
+                    # retrieve character
+                    cursor.execute("SELECT * FROM P_CHARACTER WHERE (dci_number = %s AND p_name = %s)",
+                                   (dci_number, char_name,))
+                    # make sure it was retrieved
+                    char = cursor.fetchone()
+                    logger.info(char)
+                    if char[0] != dci_number:
+                        db.close(cursor, conn)
+                        return jsonify({'msg': 'ERROR, item not added'}), 500
+                    conn.commit()
+                    # close connections
+                    db.close(cursor, conn)
+                    return jsonify({'character': char}), 201
+                else:
+                    return jsonify({'msg': 'ERROR: one or more items in body too long'}), 400
             else:
                 return jsonify({'msg': 'ERROR: no body present'}), 400
 
@@ -191,8 +207,64 @@ def character(char_name):
             return jsonify({'msg': 'ERROR'}), 500
     # update character
     if request.method == 'PUT':
-        pass
+        try:
+            body = request.json
+            if body:
+                if items_in_dict_not_greater_than(body, 30):
+                    # get db connection
+                    conn, cursor = db.get_db()
+                    # get existing character
+                    cursor.execute("SELECT * FROM P_CHARACTER WHERE (dci_number = %s AND p_name = %s)",
+                                   (dci_number, char_name,))
+                    char = cursor.fetchone()
+                    logger.info(char)
+                    # verify character exists
+                    if not char:
+                        db.close(cursor, conn)
+                        return jsonify({'msg': f'ERROR, character with name: {char_name} does not exist'}), 400
+                    # character schema (dci_number, p_name, race, class , background, level)
+                    # update attributes that need updating
+                    update_data = {}
+                    if 'race' in body:
+                        update_data['race'] = body.get('race')
+                    else:
+                        update_data['race'] = char[2]
 
+                    if 'class' in body:
+                        update_data['class'] = body.get('class')
+                    else:
+                        update_data['class'] = char[3]
+
+                    if 'background' in body:
+                        update_data['background'] = body.get('background')
+                    else:
+                        update_data['background'] = char[4]
+
+                    if 'level' in body:
+                        level = body.get('level')
+                        if level > 20 or level < 0:
+                            return jsonify({'msg': 'ERROR: invalid level'}), 400
+                        update_data['level'] = level
+                    else:
+                        update_data['level'] = char[5]
+
+                    # update database
+                    cursor.execute("UPDATE P_CHARACTER SET race=%s, class=%s, background=%s, level=%s WHERE dci_number = %s and p_name = %s", (update_data['race'], update_data['class'], update_data['background'], update_data['level'], dci_number, char_name,))
+                    conn.commit()
+                    # close connections
+                    db.close(cursor, conn)
+                    return jsonify({'msg': f'SUCCESS: character {char_name} updated'}), 200
+                else:
+                    return jsonify({'msg': 'ERROR: one or more items in body too long'}), 400
+            else:
+                return jsonify({'msg': 'ERROR: no body present'}), 400
+
+        except Exception as e:
+            logger.error(e.__str__())
+            return jsonify({'msg': 'ERROR'}), 500
+
+    elif request.method == 'DELETE':
+        return jsonify({'msg': 'ERROR: not implemented'}), 500
 
 
 def insert_player(name, dci_number):
@@ -201,7 +273,7 @@ def insert_player(name, dci_number):
     cursor.execute("INSERT INTO player(dci_number, p_name) VALUES (%s, %s)", (dci_number, name))
     # query item just inserted
     cursor.execute("SELECT * FROM player WHERE (dci_number = %s)", (dci_number,))
-    # gram item just queried
+    # grab item just queried
     added = cursor.fetchone()
     # check to make sure that it was added properly
     if added[1] == name and added[0] == dci_number:
@@ -212,6 +284,14 @@ def insert_player(name, dci_number):
     else:
         db.close(conn, cursor)
         return False
+
+
+def items_in_dict_not_greater_than(input_dict, length):
+    for k, v in input_dict.items():
+        if isinstance(v, str):
+            if len(v) > length:
+                return False
+    return True
 
 
 # app will run when this file is run
