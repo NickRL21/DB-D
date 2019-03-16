@@ -267,6 +267,68 @@ def character(char_name):
         return jsonify({'msg': 'ERROR: not implemented'}), 500
 
 
+# endpoint for getting, adding, deleting, or updating magic items
+@app.route('/magic_items/<char_name>', methods=['GET', 'POST', 'DELETE'])
+@auth.login_required
+def magic_item(char_name):
+    # enforce length constraint
+    if not char_name:
+        return jsonify({'msg': 'ERROR: character name cannot be null'}), 400
+    if len(char_name) > 30:
+        return jsonify({'msg': 'ERROR: character name too long, max 30 characters'}), 400
+
+    dci_number = g.user.get('username')
+    db = Database(DB_CREDENTIAL_PATH)
+    if request.method == 'GET':
+        try:
+            # TODO check to see if character exists first for better error messages
+            # get db connection
+            conn, cursor = db.get_db()
+            # execute query
+            cursor.execute("SELECT * FROM MAGICAL_ITEM WHERE (dci_number = %s and character_name= %s)", (dci_number, char_name,))
+            # build response
+            resp = {'body': cursor.fetchone()}
+            # close connections
+            db.close(cursor, conn)
+            return jsonify(resp), 200
+        except Exception as e:
+            logger.error(e.__str__())
+            return jsonify({'msg': 'ERROR'}), 500
+
+    if request.method == 'POST':
+        try:
+            body = request.json
+            if body:
+                if items_in_dict_not_greater_than(body, 30):
+                    # get db connection
+                    conn, cursor = db.get_db()
+                    # insert magical item
+                    cursor.execute("INSERT INTO Magical_item(dci_number, character_name, item_name, quantity, date_acquired) VALUES(%s, %s, %s, %s, %s)",
+                                   (dci_number, char_name, body.get('item_name'), body.get('quantity'), body.get('date_acquired')))
+
+                    # make sure it was retrieved
+                    # retrieve character
+                    cursor.execute("SELECT * FROM Magical_item WHERE (dci_number = %s AND character_name = %s AND item_name = %s)",
+                                   (dci_number, char_name, body.get('item_name'),))
+                    char = cursor.fetchone()
+                    logger.info(char)
+                    if char[0] != dci_number:
+                        db.close(cursor, conn)
+                        return jsonify({'msg': 'ERROR, item not added'}), 500
+                    conn.commit()
+                    # close connections
+                    db.close(cursor, conn)
+                    return jsonify({'character': char}), 201
+                else:
+                    return jsonify({'msg': 'ERROR: one or more items in body too long'}), 400
+            else:
+                return jsonify({'msg': 'ERROR: no body present'}), 400
+        except Exception as e:
+            logger.error(e.__str__())
+            raise e
+            return jsonify({'msg': 'ERROR'}), 500
+
+
 def insert_player(name, dci_number):
     db = Database(DB_CREDENTIAL_PATH)
     conn, cursor = db.get_db()
