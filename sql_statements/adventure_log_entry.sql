@@ -15,6 +15,6 @@ CREATE TABLE ADVENTURE_LOG_ENTRY(
   DM_DCI CHAR(10),
   PRIMARY KEY (A_log_id, player_DCI, character_name),
   FOREIGN KEY (player_DCI) REFERENCES PLAYER(dci_number),
-  FOREIGN KEY (player_dci, character_name) REFERENCES P_CHARACTER(dci_number,p_name)
+  FOREIGN KEY (player_dci, character_name) REFERENCES P_CHARACTER(dci_number,character_name)
 );
 
