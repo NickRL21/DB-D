@@ -139,7 +139,6 @@ def characters():
             db.close(cursor, conn)
             return jsonify(resp), 200
         except Exception as e:
-            raise e
             logger.error(e.__str__())
             return jsonify({'msg': 'ERROR'}), 500
 
@@ -265,6 +264,56 @@ def character(char_name):
 
     elif request.method == 'DELETE':
         return jsonify({'msg': 'ERROR: not implemented'}), 500
+
+
+# endpoint for getting all downtime logs for a players character
+@app.route('/character/<char_name>/downtime_logs', methods=['GET'])
+@auth.login_required
+def downtime_logs(char_name):
+    dci_number = g.user.get('username')
+    if not char_name:
+        return jsonify({'msg': 'ERROR: character name cannot be null'}), 400
+    if len(char_name) > 30:
+        return jsonify({'msg': 'ERROR: character name too long, max 30 characters'}), 400
+    db = Database(DB_CREDENTIAL_PATH)
+    if request.method == 'GET':
+        try:
+            conn, cursor = db.get_db()
+            # execute query
+            cursor.execute("select * from downtime_log_entry where (player_dci = %s and character_name=%s) order by downtime_log_entry.dt_date desc", (dci_number, char_name))
+            # build response
+            resp = {'body': cursor.fetchall()}
+            # close connections
+            db.close(cursor, conn)
+            return jsonify(resp), 200
+        except Exception as e:
+            logger.error(e.__str__())
+            return jsonify({'msg': 'ERROR'}), 500
+
+
+# endpoint for getting all characters for a player
+@app.route('/character/<char_name>/adventure_logs', methods=['GET'])
+@auth.login_required
+def adventure_logs(char_name):
+    dci_number = g.user.get('username')
+    if not char_name:
+        return jsonify({'msg': 'ERROR: character name cannot be null'}), 400
+    if len(char_name) > 30:
+        return jsonify({'msg': 'ERROR: character name too long, max 30 characters'}), 400
+    db = Database(DB_CREDENTIAL_PATH)
+    if request.method == 'GET':
+        try:
+            conn, cursor = db.get_db()
+            # execute query
+            cursor.execute("select * from adventure_log_entry where (player_dci = %s and character_name=%s) order by adventure_log_entry.a_date desc", (dci_number, char_name))
+            # build response
+            resp = {'body': cursor.fetchall()}
+            # close connections
+            db.close(cursor, conn)
+            return jsonify(resp), 200
+        except Exception as e:
+            logger.error(e.__str__())
+            return jsonify({'msg': 'ERROR'}), 500
 
 
 # endpoint for getting, adding, deleting, or updating magic items
