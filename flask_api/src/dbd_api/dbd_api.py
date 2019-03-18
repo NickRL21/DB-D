@@ -1,4 +1,5 @@
 # from flask_api import status
+import datetime
 import logging
 from flask import Flask, request, abort, jsonify, g
 from flask_httpauth import HTTPBasicAuth
@@ -291,8 +292,8 @@ def downtime_logs(char_name):
             return jsonify({'msg': 'ERROR'}), 500
 
 
-# endpoint for getting all characters for a player
-@app.route('/character/<char_name>/adventure_logs', methods=['GET'])
+# endpoint for getting adventure logs for a players character
+@app.route('/character/<char_name>/adventure_logs', methods=['GET', 'POST'])
 @auth.login_required
 def adventure_logs(char_name):
     dci_number = g.user.get('username')
@@ -314,6 +315,47 @@ def adventure_logs(char_name):
         except Exception as e:
             logger.error(e.__str__())
             return jsonify({'msg': 'ERROR'}), 500
+    if request.method == 'POST':
+        body = request.json
+        if body:
+            if items_in_dict_not_greater_than(body, 30):
+                conn, cursor = db.get_db()
+                #  A_log_id, player_DCI, character_name, adventure_name, a_date, delta_downtime, delta_TCP_T1, delta_TCP_T2, delta_TCP_T3, delta_TCP_T4, delta_gold, delta_ACP, delta_renown, DM_DCI
+
+                adventure_name = body.get('adventure_name')
+                a_date = body.get('a_date')
+                delta_downtime = body.get('delta_downtime')
+                delta_tcp_t1 = body.get('delta_tcp_t1')
+                delta_tcp_t2 = body.get('delta_tcp_t2')
+                delta_tcp_t3 = body.get('delta_tcp_t3')
+                delta_tcp_t4 = body.get('delta_tcp_t4')
+                delta_gold = body.get('delta_gold')
+                delta_acp = body.get('delta_acp')
+                delta_renown = body.get('delta_renown')
+                dm_dci = body.get('dm_dci')
+
+                if not a_date:
+                    a_date = datetime.datetime.now().date()
+                conn, cursor = db.get_db()
+                cursor.execute("select max(adventure_log_entry.a_log_id) from adventure_log_entry where player_dci = %s and character_name = %s", (dci_number, char_name))
+                current_max_log_id = cursor.fetchone()[0]
+                a_log_id = current_max_log_id + 1
+                conn.commit()
+                if not delta_gold:
+                    delta_gold = 0.0
+
+                cursor.execute(
+                    "insert into adventure_log_entry values(%s, %s, %s, %s, %s, %s, %s, %s, %s,  %s, %s,  %s, %s, %s)",
+                    (a_log_id, dci_number, char_name, adventure_name, a_date, delta_downtime, delta_tcp_t1, delta_tcp_t2, delta_tcp_t3, delta_tcp_t4, delta_gold, delta_acp, delta_renown, dm_dci))
+                conn.commit()
+                cursor.execute("select * from adventure_log_entry where player_dci=%s and character_name=%s and a_log_id=%s", (dci_number, char_name, a_log_id))
+                new_entry = cursor.fetchone()
+                db.close(cursor, conn)
+                return jsonify({'adventure_log': new_entry}), 201
+            else:
+                return jsonify({'msg': 'ERROR: one or more items in body too long'}), 400
+        else:
+            return jsonify({'msg': 'ERROR: no body present'}), 400
 
 
 # endpoint for getting, adding, deleting, or updating magic items
