@@ -183,6 +183,7 @@ def character(char_name):
             body = request.json
             if body:
                 if items_in_dict_not_greater_than(body, 30):
+                    logger.info(body)
                     if 'level' in body:
                         level = body.get('level')
                         if level > 20 or level < 0:
