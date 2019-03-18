@@ -167,7 +167,7 @@ def character(char_name):
             # execute query
             cursor.execute("""SELECT * 
                               FROM P_CHARACTER 
-                              WHERE (dci_number = %s AND p_name = %s)""", (dci_number, char_name,))
+                              WHERE (dci_number = %s AND character_name = %s)""", (dci_number, char_name,))
             # build response
             resp = {'body': cursor.fetchone()}
             # close connections
@@ -183,19 +183,21 @@ def character(char_name):
             body = request.json
             if body:
                 if items_in_dict_not_greater_than(body, 30):
-                    if body.get('level') > 20 or body.get('level') < 0:
-                        return jsonify({'msg': 'ERROR: invalid level'}), 400
+                    if 'level' in body:
+                        level = body.get('level')
+                        if level > 20 or level < 0:
+                            return jsonify({'msg': 'ERROR: invalid level'}), 400
                     # get db connection
                     conn, cursor = db.get_db()
                     # insert character
-                    cursor.execute("""INSERT INTO P_CHARACTER(dci_number, p_name, race, class, background, level) 
+                    cursor.execute("""INSERT INTO P_CHARACTER(dci_number, character_name, race, class, background, level) 
                                       VALUES(%s, %s, %s, %s, %s, %s)""",
                                    (dci_number, char_name, body.get('race'), body.get('class'),
-                                    body.get('background'), int(body.get('level'))))
+                                    body.get('background'), body.get('level')))
                     # retrieve character
                     cursor.execute("""SELECT * 
                                       FROM P_CHARACTER 
-                                      WHERE (dci_number = %s AND p_name = %s)""",
+                                      WHERE (dci_number = %s AND character_name = %s)""",
                                    (dci_number, char_name,))
                     # make sure it was retrieved
                     char = cursor.fetchone()
@@ -226,7 +228,7 @@ def character(char_name):
                     # get existing character
                     cursor.execute("""SELECT * 
                                       FROM P_CHARACTER 
-                                      WHERE (dci_number = %s AND p_name = %s)""",
+                                      WHERE (dci_number = %s AND character_name = %s)""",
                                    (dci_number, char_name,))
                     char = cursor.fetchone()
                     logger.info(char)
@@ -234,7 +236,7 @@ def character(char_name):
                     if not char:
                         db.close(cursor, conn)
                         return jsonify({'msg': f'ERROR, character with name: {char_name} does not exist'}), 400
-                    # character schema (dci_number, p_name, race, class , background, level)
+                    # character schema (dci_number, character_name, race, class , background, level)
                     # update attributes that need updating
                     update_data = {}
                     if 'race' in body:
@@ -263,7 +265,7 @@ def character(char_name):
                     # update database
                     cursor.execute("""UPDATE P_CHARACTER 
                                       SET race=%s, class=%s, background=%s, level=%s 
-                                      WHERE dci_number = %s and p_name = %s""",
+                                      WHERE dci_number = %s and character_name = %s""",
                                    (update_data['race'], update_data['class'], update_data['background'],
                                     update_data['level'], dci_number, char_name,))
                     conn.commit()
@@ -538,7 +540,7 @@ def magic_item(char_name):
 def insert_player(name, dci_number):
     db = Database(DB_CREDENTIAL_PATH)
     conn, cursor = db.get_db()
-    cursor.execute("""INSERT INTO player(dci_number, p_name) 
+    cursor.execute("""INSERT INTO player(dci_number, character_name) 
                       VALUES (%s, %s)""", (dci_number, name))
     # query item just inserted
     cursor.execute("""SELECT * 
