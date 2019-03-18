@@ -19,7 +19,7 @@ url params: character_name
 purpose: get a character by name
 
 Get on /character/<char_name>
-purpose:
+purpose: gets a character by name
 
 POST on /character/<char_name>
 url params: character_name
