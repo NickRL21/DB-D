@@ -55,6 +55,7 @@ def registerMenu():
     if (int(response.status_code) > 299) or (int(response.status_code) < 200):  #Check for unsuccessful login.
         print(responseJson["msg"])
         print("Error Registering, Please Try Again.")
+        pressAny()
     else:
         print("Account Creation Successful. Logging In.")
         pressAny()
