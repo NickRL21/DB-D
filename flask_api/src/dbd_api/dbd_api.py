@@ -447,20 +447,64 @@ def logs(char_name):
         try:
             conn, cursor = db.get_db()
             # execute query
-            cursor.execute("""select A_log_id as log_id, character_name, a_date as log_date, delta_downtime,  
-                              delta_TCP_T1, delta_TCP_T2, delta_TCP_T3, delta_TCP_T4, delta_gold, delta_ACP, 
-                              delta_renown 
+            cursor.execute("""select A_log_id as log_id, character_name, adventure_name, a_date as log_date, 
+                              delta_downtime, delta_TCP_T1, delta_TCP_T2, delta_TCP_T3, delta_TCP_T4, delta_gold,
+                              delta_ACP, delta_renown, dm_dci, 'adventure' as log_type
                               from adventure_log_entry 
                               where (player_dci = %s and character_name = %s) 
                               union 
-                              select D_log_ID as log_id, character_name, dt_date as log_date, delta_downtime, 
-                              delta_TCP_T1, delta_TCP_T2, delta_TCP_T3, delta_TCP_T4, delta_gold, delta_ACP, 
-                              delta_Renown 
+                              select D_log_ID as log_id, character_name, null as adventure_name, dt_date as log_date,
+                              delta_downtime, delta_TCP_T1, delta_TCP_T2, delta_TCP_T3, delta_TCP_T4, delta_gold,
+                              delta_ACP, delta_renown, null as dm_dci, 'downtime' as log_type
                               from downtime_log_entry 
                               where (player_dci = %s and character_name = %s) 
                               order by log_date desc;""", (dci_number, char_name, dci_number, char_name))
             # build response
-            resp = {'body': cursor.fetchall()}
+            resp = {'logs': cursor.fetchall()}
+            # close connections
+            db.close(cursor, conn)
+            return jsonify(resp), 200
+        except Exception as e:
+            logger.error(e.__str__())
+            return jsonify({'msg': 'ERROR'}), 500
+
+
+@app.route('/character/<char_name>/progression')
+@auth.login_required
+def progression(char_name):
+    # enforce length constraint
+    if not char_name:
+        return jsonify({'msg': 'ERROR: character name cannot be null'}), 400
+    if len(char_name) > 30:
+        return jsonify({'msg': 'ERROR: character name too long, max 30 characters'}), 400
+
+    dci_number = g.user.get('username')
+    db = Database(DB_CREDENTIAL_PATH)
+    if request.method == 'GET':
+        try:
+            # get db connection
+            conn, cursor = db.get_db()
+            # execute query
+            cursor.execute("""select p_character.character_name, race, class, background, level, sum(delta_downtime),
+                                     sum(delta_TCP_T1), sum(delta_TCP_T2), sum(delta_TCP_T3), sum(delta_TCP_T4), 
+                                     sum(delta_gold), sum(delta_ACP), sum(delta_renown)
+                              from p_character join (
+                                select player_dci, A_log_id as log_id, character_name, a_date as log_date, 
+                                       delta_downtime, delta_TCP_T1, delta_TCP_T2, delta_TCP_T3, delta_TCP_T4, 
+                                       delta_gold, delta_ACP, delta_renown
+                                from adventure_log_entry
+                                where player_dci = %s and character_name = %s
+                                union
+                                select player_dci, D_log_ID as log_id, character_name, dt_date as log_date, 
+                                       delta_downtime, delta_TCP_T1, delta_TCP_T2, delta_TCP_T3, delta_TCP_T4, 
+                                       delta_gold, delta_ACP, delta_renown
+                                from downtime_log_entry
+                                where player_dci = %s and character_name = %s
+                              ) as logs
+                              on p_character.character_name = logs.character_name
+                              group by p_character.character_name, race, class, background, level;
+            """, (dci_number, char_name, dci_number, char_name))
+            resp = {'progression': cursor.fetchall()}
             # close connections
             db.close(cursor, conn)
             return jsonify(resp), 200
@@ -489,7 +533,8 @@ def magic_item(char_name):
             # execute query
             cursor.execute("""SELECT * 
                               FROM MAGICAL_ITEM 
-                              WHERE (dci_number = %s and character_name= %s)""", (dci_number, char_name,))
+                              WHERE (dci_number = %s and character_name= %s)
+                              ORDER BY date_acquired""", (dci_number, char_name,))
             # build response
             resp = {'body': cursor.fetchone()}
             # close connections
@@ -540,7 +585,7 @@ def magic_item(char_name):
 def insert_player(name, dci_number):
     db = Database(DB_CREDENTIAL_PATH)
     conn, cursor = db.get_db()
-    cursor.execute("""INSERT INTO player(dci_number, character_name) 
+    cursor.execute("""INSERT INTO player(dci_number, p_name) 
                       VALUES (%s, %s)""", (dci_number, name))
     # query item just inserted
     cursor.execute("""SELECT * 
