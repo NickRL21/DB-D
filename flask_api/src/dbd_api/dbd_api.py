@@ -335,7 +335,12 @@ def downtime_logs(char_name):
                                   from downtime_log_entry 
                                   where player_dci = %s and character_name = %s""", (dci_number, char_name))
                 current_max_log_id = cursor.fetchone()[0]
-                d_log_id = current_max_log_id + 1
+
+                if current_max_log_id:
+                    d_log_id = current_max_log_id + 1
+                else:
+                    d_log_id = 1
+
                 conn.commit()
                 if not delta_gold:
                     delta_gold = 0.0
@@ -411,7 +416,10 @@ def adventure_logs(char_name):
                                   from adventure_log_entry
                                   where player_dci = %s and character_name = %s""", (dci_number, char_name))
                 current_max_log_id = cursor.fetchone()[0]
-                a_log_id = current_max_log_id + 1
+                if current_max_log_id:
+                    a_log_id = current_max_log_id + 1
+                else:
+                    a_log_id = 1
                 conn.commit()
                 if not delta_gold:
                     delta_gold = 0.0
