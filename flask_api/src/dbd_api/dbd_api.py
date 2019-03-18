@@ -112,7 +112,9 @@ def get_player():
         try:
             conn, cursor = db.get_db()
             # execute query
-            cursor.execute("SELECT * FROM Player WHERE (dci_number = %s)", (dci_number,))
+            cursor.execute("""SELECT * 
+                              FROM Player 
+                              WHERE (dci_number = %s)""", (dci_number,))
             # build response
             resp = {'body': cursor.fetchall()}
             # close connections
@@ -133,7 +135,9 @@ def characters():
         try:
             conn, cursor = db.get_db()
             # execute query
-            cursor.execute("SELECT * FROM P_CHARACTER WHERE (dci_number = %s)", (dci_number,))
+            cursor.execute("""SELECT * 
+                              FROM P_CHARACTER 
+                              WHERE (dci_number = %s)""", (dci_number,))
             # build response
             resp = {'body': cursor.fetchall()}
             # close connections
@@ -161,7 +165,9 @@ def character(char_name):
             # get db connection
             conn, cursor = db.get_db()
             # execute query
-            cursor.execute("SELECT * FROM P_CHARACTER WHERE (dci_number = %s AND p_name = %s)", (dci_number, char_name,))
+            cursor.execute("""SELECT * 
+                              FROM P_CHARACTER 
+                              WHERE (dci_number = %s AND p_name = %s)""", (dci_number, char_name,))
             # build response
             resp = {'body': cursor.fetchone()}
             # close connections
@@ -182,10 +188,14 @@ def character(char_name):
                     # get db connection
                     conn, cursor = db.get_db()
                     # insert character
-                    cursor.execute("INSERT INTO P_CHARACTER(dci_number, p_name, race, class, background, level) VALUES(%s, %s, %s, %s, %s, %s)",
-                                   (dci_number, char_name, body.get('race'), body.get('class'), body.get('background'), int(body.get('level'))))
+                    cursor.execute("""INSERT INTO P_CHARACTER(dci_number, p_name, race, class, background, level) 
+                                      VALUES(%s, %s, %s, %s, %s, %s)""",
+                                   (dci_number, char_name, body.get('race'), body.get('class'),
+                                    body.get('background'), int(body.get('level'))))
                     # retrieve character
-                    cursor.execute("SELECT * FROM P_CHARACTER WHERE (dci_number = %s AND p_name = %s)",
+                    cursor.execute("""SELECT * 
+                                      FROM P_CHARACTER 
+                                      WHERE (dci_number = %s AND p_name = %s)""",
                                    (dci_number, char_name,))
                     # make sure it was retrieved
                     char = cursor.fetchone()
@@ -214,7 +224,9 @@ def character(char_name):
                     # get db connection
                     conn, cursor = db.get_db()
                     # get existing character
-                    cursor.execute("SELECT * FROM P_CHARACTER WHERE (dci_number = %s AND p_name = %s)",
+                    cursor.execute("""SELECT * 
+                                      FROM P_CHARACTER 
+                                      WHERE (dci_number = %s AND p_name = %s)""",
                                    (dci_number, char_name,))
                     char = cursor.fetchone()
                     logger.info(char)
@@ -249,7 +261,11 @@ def character(char_name):
                         update_data['level'] = char[5]
 
                     # update database
-                    cursor.execute("UPDATE P_CHARACTER SET race=%s, class=%s, background=%s, level=%s WHERE dci_number = %s and p_name = %s", (update_data['race'], update_data['class'], update_data['background'], update_data['level'], dci_number, char_name,))
+                    cursor.execute("""UPDATE P_CHARACTER 
+                                      SET race=%s, class=%s, background=%s, level=%s 
+                                      WHERE dci_number = %s and p_name = %s""",
+                                   (update_data['race'], update_data['class'], update_data['background'],
+                                    update_data['level'], dci_number, char_name,))
                     conn.commit()
                     # close connections
                     db.close(cursor, conn)
@@ -281,7 +297,10 @@ def downtime_logs(char_name):
         try:
             conn, cursor = db.get_db()
             # execute query
-            cursor.execute("select * from downtime_log_entry where (player_dci = %s and character_name=%s) order by downtime_log_entry.dt_date desc", (dci_number, char_name))
+            cursor.execute("""select * 
+                              from downtime_log_entry 
+                              where (player_dci = %s and character_name=%s) 
+                              order by downtime_log_entry.dt_date desc""", (dci_number, char_name))
             # build response
             resp = {'body': cursor.fetchall()}
             # close connections
@@ -309,18 +328,25 @@ def downtime_logs(char_name):
                 if not dt_date:
                     dt_date = datetime.datetime.now().date()
                 conn, cursor = db.get_db()
-                cursor.execute("select max(downtime_log_entry.d_log_id) from downtime_log_entry where player_dci = %s and character_name = %s", (dci_number, char_name))
+                cursor.execute("""select max(downtime_log_entry.d_log_id) 
+                                  from downtime_log_entry 
+                                  where player_dci = %s and character_name = %s""", (dci_number, char_name))
                 current_max_log_id = cursor.fetchone()[0]
                 d_log_id = current_max_log_id + 1
                 conn.commit()
                 if not delta_gold:
                     delta_gold = 0.0
 
-                cursor.execute(
-                    "insert into downtime_log_entry values(%s, %s, %s, %s, %s, %s, %s, %s,  %s, %s,  %s, %s)",
-                    (d_log_id, dci_number, char_name, dt_date, delta_downtime, delta_gold, delta_tcp_t1, delta_tcp_t2, delta_tcp_t3, delta_tcp_t4, delta_acp, delta_renown))
+                cursor.execute("""insert into downtime_log_entry 
+                                  values(%s, %s, %s, %s, %s, %s, %s, %s,  %s, %s,  %s, %s)""",
+                    (d_log_id, dci_number, char_name, dt_date, delta_downtime, delta_gold, delta_tcp_t1, delta_tcp_t2,
+                     delta_tcp_t3, delta_tcp_t4, delta_acp, delta_renown))
+
                 conn.commit()
-                cursor.execute("select * from downtime_log_entry where player_dci=%s and character_name=%s and d_log_id=%s", (dci_number, char_name, d_log_id))
+                cursor.execute("""select * 
+                                  from downtime_log_entry 
+                                  where player_dci=%s and character_name=%s and d_log_id=%s""",
+                               (dci_number, char_name, d_log_id))
                 new_entry = cursor.fetchone()
                 db.close(cursor, conn)
                 return jsonify({'downtime_log': new_entry}), 201
@@ -344,7 +370,10 @@ def adventure_logs(char_name):
         try:
             conn, cursor = db.get_db()
             # execute query
-            cursor.execute("select * from adventure_log_entry where (player_dci = %s and character_name=%s) order by adventure_log_entry.a_date desc", (dci_number, char_name))
+            cursor.execute("""select * 
+                              from adventure_log_entry 
+                              where (player_dci = %s and character_name=%s) 
+                              order by adventure_log_entry.a_date desc""", (dci_number, char_name))
             # build response
             resp = {'body': cursor.fetchall()}
             # close connections
@@ -375,18 +404,24 @@ def adventure_logs(char_name):
                 if not a_date:
                     a_date = datetime.datetime.now().date()
                 conn, cursor = db.get_db()
-                cursor.execute("select max(adventure_log_entry.a_log_id) from adventure_log_entry where player_dci = %s and character_name = %s", (dci_number, char_name))
+                cursor.execute("""select max(adventure_log_entry.a_log_id)
+                                  from adventure_log_entry
+                                  where player_dci = %s and character_name = %s""", (dci_number, char_name))
                 current_max_log_id = cursor.fetchone()[0]
                 a_log_id = current_max_log_id + 1
                 conn.commit()
                 if not delta_gold:
                     delta_gold = 0.0
 
-                cursor.execute(
-                    "insert into adventure_log_entry values(%s, %s, %s, %s, %s, %s, %s, %s, %s,  %s, %s,  %s, %s, %s)",
-                    (a_log_id, dci_number, char_name, adventure_name, a_date, delta_downtime, delta_tcp_t1, delta_tcp_t2, delta_tcp_t3, delta_tcp_t4, delta_gold, delta_acp, delta_renown, dm_dci))
+                cursor.execute("""insert into adventure_log_entry 
+                                  values(%s, %s, %s, %s, %s, %s, %s, %s, %s,  %s, %s,  %s, %s, %s)""",
+                     (a_log_id, dci_number, char_name, adventure_name, a_date, delta_downtime, delta_tcp_t1,
+                     delta_tcp_t2, delta_tcp_t3, delta_tcp_t4, delta_gold, delta_acp, delta_renown, dm_dci))
                 conn.commit()
-                cursor.execute("select * from adventure_log_entry where player_dci=%s and character_name=%s and a_log_id=%s", (dci_number, char_name, a_log_id))
+                cursor.execute("""select * 
+                                  from adventure_log_entry 
+                                  where player_dci=%s and character_name=%s and a_log_id=%s""",
+                               (dci_number, char_name, a_log_id))
                 new_entry = cursor.fetchone()
                 db.close(cursor, conn)
                 return jsonify({'adventure_log': new_entry}), 201
@@ -394,6 +429,42 @@ def adventure_logs(char_name):
                 return jsonify({'msg': 'ERROR: one or more items in body too long'}), 400
         else:
             return jsonify({'msg': 'ERROR: no body present'}), 400
+
+
+# endpoint for getting adventure and downtime logs combined sorted by date
+@app.route('/character/<char_name>/logs', methods=['GET'])
+@auth.login_required
+def logs(char_name):
+    dci_number = g.user.get('username')
+    if not char_name:
+        return jsonify({'msg': 'ERROR: character name cannot be null'}), 400
+    if len(char_name) > 30:
+        return jsonify({'msg': 'ERROR: character name too long, max 30 characters'}), 400
+    db = Database(DB_CREDENTIAL_PATH)
+    if request.method == 'GET':
+        try:
+            conn, cursor = db.get_db()
+            # execute query
+            cursor.execute("""select A_log_id as log_id, character_name, a_date as log_date, delta_downtime,  
+                              delta_TCP_T1, delta_TCP_T2, delta_TCP_T3, delta_TCP_T4, delta_gold, delta_ACP, 
+                              delta_renown 
+                              from adventure_log_entry 
+                              where (player_dci = %s and character_name = %s) 
+                              union 
+                              select D_log_ID as log_id, character_name, dt_date as log_date, delta_downtime, 
+                              delta_TCP_T1, delta_TCP_T2, delta_TCP_T3, delta_TCP_T4, delta_gold, delta_ACP, 
+                              delta_Renown 
+                              from downtime_log_entry 
+                              where (player_dci = %s and character_name = %s) 
+                              order by log_date desc;""", (dci_number, char_name, dci_number, char_name))
+            # build response
+            resp = {'body': cursor.fetchall()}
+            # close connections
+            db.close(cursor, conn)
+            return jsonify(resp), 200
+        except Exception as e:
+            logger.error(e.__str__())
+            return jsonify({'msg': 'ERROR'}), 500
 
 
 # endpoint for getting, adding, deleting, or updating magic items
@@ -414,7 +485,9 @@ def magic_item(char_name):
             # get db connection
             conn, cursor = db.get_db()
             # execute query
-            cursor.execute("SELECT * FROM MAGICAL_ITEM WHERE (dci_number = %s and character_name= %s)", (dci_number, char_name,))
+            cursor.execute("""SELECT * 
+                              FROM MAGICAL_ITEM 
+                              WHERE (dci_number = %s and character_name= %s)""", (dci_number, char_name,))
             # build response
             resp = {'body': cursor.fetchone()}
             # close connections
@@ -432,12 +505,16 @@ def magic_item(char_name):
                     # get db connection
                     conn, cursor = db.get_db()
                     # insert magical item
-                    cursor.execute("INSERT INTO Magical_item(dci_number, character_name, item_name, quantity, date_acquired) VALUES(%s, %s, %s, %s, %s)",
-                                   (dci_number, char_name, body.get('item_name'), body.get('quantity'), body.get('date_acquired')))
+                    cursor.execute("""INSERT INTO Magical_item(dci_number, character_name, item_name, quantity, date_acquired)
+                                      VALUES(%s, %s, %s, %s, %s)""",
+                                   (dci_number, char_name, body.get('item_name'), body.get('quantity'),
+                                    body.get('date_acquired')))
 
                     # make sure it was retrieved
                     # retrieve character
-                    cursor.execute("SELECT * FROM Magical_item WHERE (dci_number = %s AND character_name = %s AND item_name = %s)",
+                    cursor.execute("""SELECT * 
+                                      FROM Magical_item 
+                                      WHERE (dci_number = %s AND character_name = %s AND item_name = %s)""",
                                    (dci_number, char_name, body.get('item_name'),))
                     char = cursor.fetchone()
                     logger.info(char)
@@ -461,9 +538,12 @@ def magic_item(char_name):
 def insert_player(name, dci_number):
     db = Database(DB_CREDENTIAL_PATH)
     conn, cursor = db.get_db()
-    cursor.execute("INSERT INTO player(dci_number, p_name) VALUES (%s, %s)", (dci_number, name))
+    cursor.execute("""INSERT INTO player(dci_number, p_name) 
+                      VALUES (%s, %s)""", (dci_number, name))
     # query item just inserted
-    cursor.execute("SELECT * FROM player WHERE (dci_number = %s)", (dci_number,))
+    cursor.execute("""SELECT * 
+                      FROM player 
+                      WHERE (dci_number = %s)""", (dci_number,))
     # grab item just queried
     added = cursor.fetchone()
     # check to make sure that it was added properly
@@ -510,7 +590,9 @@ from passlib.apps import custom_app_context as pwd_context
 def user_exists(dci_number):
     user_db = Database(DB_CREDENTIAL_PATH)
     conn, cursor = user_db.get_db()
-    cursor.execute("SELECT dci_number FROM users WHERE dci_number = %s", (dci_number,))
+    cursor.execute("""SELECT dci_number 
+                      FROM users 
+                      WHERE dci_number = %s""", (dci_number,))
     user = cursor.fetchone()
     Database.close(conn, cursor)
     if user is not None:
@@ -524,8 +606,12 @@ def add_user(dci_number, password):
     user_db = Database(DB_CREDENTIAL_PATH)
     conn, cursor = user_db.get_db()
     try:
-        cursor.execute("INSERT INTO users VALUES (%s, %s)", (dci_number, hashed_pwd,))
-        cursor.execute("SELECT * FROM users WHERE dci_number = %s", (dci_number,))
+        cursor.execute("""INSERT INTO users 
+                          VALUES (%s, %s)""", (dci_number, hashed_pwd,))
+
+        cursor.execute("""SELECT * 
+                          FROM users 
+                          WHERE dci_number = %s""", (dci_number,))
         added = cursor.fetchone()
         # check to make sure that it was added properly
         if added[0] == dci_number:
@@ -543,7 +629,9 @@ def add_user(dci_number, password):
 def authenticate_user(dci_number, password):
     user_db = Database(DB_CREDENTIAL_PATH)
     conn, cursor = user_db.get_db()
-    cursor.execute("SELECT pwd_hash FROM users WHERE dci_number = %s", (dci_number,))
+    cursor.execute("""SELECT pwd_hash 
+                      FROM users 
+                      WHERE dci_number = %s""", (dci_number,))
     hash = cursor.fetchone()
     Database.close(conn, cursor)
     if hash is not None:
@@ -578,7 +666,8 @@ class Database:
     def get_db_conn(self):
         try:
             # change to read password from file
-            connect_str = f"dbname='{self._credentials.get('dbname')}' user='{self._credentials.get('user')}' host='{self._credentials.get('host')}' password='{self._credentials.get('password')}'"
+            connect_str = f"dbname='{self._credentials.get('dbname')}' user='{self._credentials.get('user')}' \
+                            host='{self._credentials.get('host')}' password='{self._credentials.get('password')}'"
             conn = psycopg2.connect(connect_str)
             return conn
         except Exception as e:
