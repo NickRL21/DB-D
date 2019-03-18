@@ -94,3 +94,18 @@ PROGRESSION
 GET on /character/<char_name>/progression
 url params: character_name
 
+MAGICAL_ITEMS
+GET on /magic_items/<char_name>
+url params: character_name
+purpose: gets all magical items for a character
+
+POST on /magic_items/<char_name>
+url params: character_name
+purpose: add a new magical item
+
+body like: {
+	"item_name": "glowing bucket",
+	"quantity": 3,
+	"date_acquired": "2018-09-21"
+}
+

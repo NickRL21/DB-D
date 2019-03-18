@@ -537,7 +537,7 @@ def magic_item(char_name):
                               WHERE (dci_number = %s and character_name= %s)
                               ORDER BY date_acquired""", (dci_number, char_name,))
             # build response
-            resp = {'body': cursor.fetchone()}
+            resp = {'body': cursor.fetchall()}
             # close connections
             db.close(cursor, conn)
             return jsonify(resp), 200
