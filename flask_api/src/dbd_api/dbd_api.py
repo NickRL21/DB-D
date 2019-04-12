@@ -1,49 +1,41 @@
-# from flask_api import status
+# ===================================================================
+# Name:         dbd_api.py
+# Date:         February 24, 2019
+# Author:       Nicholas Lewis
+# Description:  Restful API for DBnD that gives the CRUD functionality
+#               necessary to login, and manage dungeons and dragons
+#               information needed to replace paper log sheets.
+# ===================================================================
 import datetime
 import logging
 from flask import Flask, request, abort, jsonify, g
 from flask_httpauth import HTTPBasicAuth
 import psycopg2
 import json
-# for the life of me i can't get the deployed version to import the other files
-# from dbd_api.database_helper import Database  # need to fix this import
-# from dbd_api.user_helper import user_exists, authenticate_user, add_user
+
 
 app = Flask(__name__)
 auth = HTTPBasicAuth()
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-# this path is required for creds when flask is running./src/dbd_api/dbd_creds
 
 # api is live at https://unthgdgw0h.execute-api.us-east-1.amazonaws.com/dev
 
-##############################################
-# resources to get started ask Nick for help #
-##############################################
-
-##############################
-# help with database library #
-##############################
-# http://initd.org/psycopg/docs/usage.html
-
-###########################
-# Help with api framework #
-###########################
+# =================================
+# Resources used for flask examples
+# =================================
 # https://flask-restful.readthedocs.io/en/0.3.5/quickstart.html
 # http://flask.pocoo.org/docs/1.0/
 
-############################################
-# Help with the serverless framework zappa #
-############################################
+# =================================
+# Resources used for Zappa examples
+# =================================
 # https://github.com/Miserlou/Zappa
 # https://www.gun.io/blog/serverless-microservices-with-zappa-and-flask
 
-# just for my reference
 
-# https://github.com/Miserlou/Zappa#advanced-settings
 DB_CREDENTIAL_PATH = './src/dbd_api/dbd_creds'
-# for local testing
-#DB_CREDENTIAL_PATH = 'dbd_creds'
+
 
 @app.route('/')
 @auth.login_required
@@ -625,21 +617,10 @@ def items_in_dict_not_greater_than(input_dict, length):
 if __name__ == '__main__':
     app.run(debug=True)
 
-# TODO
-# login (dci_number, password)
-# 401 for wrong password
-# 404 for not registered
-# 200 for successful login
 
-# TODO register(dci_number, name, password)
-
-
-# helper methods unfortunatly these have to be in this file right now
-# i cant get lambda to import the helper files
-
-######################
-# user login helper methods
-######################
+# =======================================================
+# Additional methods and classes to support the flask API
+# =======================================================
 from passlib.apps import custom_app_context as pwd_context
 
 
@@ -706,10 +687,6 @@ def hash(password):
 def verify(password, hash):
     return pwd_context.verify(password, hash)
 
-
-###################
-# database helper
-###################
 
 class Database:
     def __init__(self, credential_path):
