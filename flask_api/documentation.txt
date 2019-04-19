@@ -1,4 +1,3 @@
-current base api endpoint: https://unthgdgw0h.execute-api.us-east-1.amazonaws.com/dev
 
 REGISTER
 POST on /register
